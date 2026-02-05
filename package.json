@@ -4,13 +4,13 @@
   "description": "Official TypeScript SDK for the Legitmark API",
   "author": "Legitmark <support@legitmark.com>",
   "license": "MIT",
-  "homepage": "https://github.com/legitmark/legitmark-typescript#readme",
+  "homepage": "https://github.com/legitmark-eng/legitmark-typescript#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/legitmark/legitmark-typescript.git"
+    "url": "https://github.com/legitmark-eng/legitmark-typescript.git"
   },
   "bugs": {
-    "url": "https://github.com/legitmark/legitmark-typescript/issues"
+    "url": "https://github.com/legitmark-eng/legitmark-typescript/issues"
   },
   "keywords": [
     "legitmark",
