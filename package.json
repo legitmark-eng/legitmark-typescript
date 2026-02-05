@@ -1,0 +1,65 @@
+{
+  "name": "legitmark",
+  "version": "0.1.0",
+  "description": "Official TypeScript SDK for the Legitmark API",
+  "author": "Legitmark <support@legitmark.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/legitmark/legitmark-typescript#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/legitmark/legitmark-typescript.git"
+  },
+  "bugs": {
+    "url": "https://github.com/legitmark/legitmark-typescript/issues"
+  },
+  "keywords": [
+    "legitmark",
+    "authentication",
+    "api",
+    "sdk",
+    "typescript"
+  ],
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "lint": "eslint src/ tests/",
+    "lint:fix": "eslint src/ tests/ --fix",
+    "test": "ts-node tests/run-workflow.ts",
+    "test:step": "ts-node tests/run-step.ts"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@types/node": "^20.0.0",
+    "eslint": "^9.39.2",
+    "ts-node": "^10.9.2",
+    "tsup": "^8.5.1",
+    "typescript": "^5.3.0",
+    "typescript-eslint": "^8.54.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
