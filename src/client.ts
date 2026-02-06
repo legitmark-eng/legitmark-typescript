@@ -34,7 +34,7 @@ export const IMAGE_CONTENT_TYPES = {
 
 export type ImageContentType = typeof IMAGE_CONTENT_TYPES[keyof typeof IMAGE_CONTENT_TYPES];
 
-export const SDK_VERSION = '0.1.0';
+export const SDK_VERSION = '0.1.1';
 
 const LOGGER_PREFIX = 'LegitmarkPartnerSDK';
 const DEFAULT_RETRY_ATTEMPTS = 3;

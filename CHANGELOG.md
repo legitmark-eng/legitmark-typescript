@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-02-06
+
+### Added
+
+- Tests badge (99 passing) in README
+- "Getting an API Key" section with contact email
+- CI now runs unit tests
+- Trusted Publishing (OIDC) for npm releases
+
+### Fixed
+
+- Default API URL changed from staging to production
+- HTTP 504 maps to TIMEOUT_ERROR
+- Client-side timeout correctly maps to TIMEOUT_ERROR
+- README error codes table matches actual SDK codes
+
+### Changed
+
+- Publish workflow uses OIDC instead of npm token
+- Cleaned up comments and section dividers
+- Updated CONTRIBUTING.md with current project structure
+
 ### Added
 
 - Unit test suite: client, errors, taxonomy, SR, images (99 tests)
