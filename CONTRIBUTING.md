@@ -18,15 +18,27 @@ Thank you for your interest in contributing! This document provides guidelines f
 ## Project Structure
 
 ```
-sdk/partner/
+legitmark-typescript/
 ├── src/
-│   ├── index.ts        # Public exports
-│   ├── client.ts       # PartnerClient, Legitmark alias, error handling
-│   ├── types.ts        # TypeScript interfaces
-│   ├── workflow.ts     # WorkflowRunner for orchestrated flows
-│   └── resources/      # API resource classes (sr, taxonomy, images)
-├── tests/              # Test scripts
-└── dist/               # Build output (generated)
+│   ├── index.ts          # Public exports
+│   ├── client.ts         # PartnerClient, Legitmark, error handling, retry
+│   ├── types.ts          # TypeScript interfaces
+│   ├── workflow.ts        # WorkflowRunner for orchestrated flows
+│   └── resources/        # API resource classes
+│       ├── index.ts      # Resource re-exports
+│       ├── taxonomy.ts   # Categories, types, brands
+│       ├── sr.ts         # Service requests
+│       └── images.ts     # Image uploads
+├── tests/
+│   ├── fixtures/         # Realistic test data from the API
+│   ├── utils.ts          # Shared test utilities and helpers
+│   ├── client.test.ts    # Client and retry tests
+│   ├── errors.test.ts    # Error class tests
+│   ├── taxonomy.test.ts  # Taxonomy resource tests
+│   ├── sr.test.ts        # Service request tests
+│   ├── images.test.ts    # Image upload tests
+│   └── workflow.e2e.test.ts  # E2E workflow (requires API key)
+└── dist/                 # Build output (generated)
 ```
 
 ## Scripts
@@ -34,8 +46,9 @@ sdk/partner/
 - `npm run build` - Build CJS/ESM bundles with tsup
 - `npm run lint` - Run ESLint
 - `npm run lint:fix` - Run ESLint with auto-fix
-- `npm test` - Run workflow test
-- `npm run test:step` - Run step-by-step test
+- `npm run test:unit` - Run unit tests
+- `npm run test:e2e` - Run E2E tests (requires `.env` with API key)
+- `npm run test:all` - Run all tests (unit + E2E)
 
 ## Code Style
 
@@ -43,15 +56,20 @@ sdk/partner/
 - Prefer explicit types over inference for public APIs
 - Use JSDoc comments for public methods
 - Follow existing patterns in the codebase
+- No obvious comments (don't comment what the code already says)
 
 ## Making Changes
 
 1. Create a feature branch from `main`
 2. Make your changes
-3. Run type checking: `npx tsc --noEmit`
-4. Run tests to verify nothing is broken
-5. Update CHANGELOG.md with your changes
-6. Submit a pull request
+3. Run the checks:
+   ```bash
+   npm run lint
+   npx tsc --noEmit
+   npm run test:unit
+   ```
+4. Update CHANGELOG.md with your changes
+5. Submit a pull request
 
 ## Commit Messages
 

@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Unit test suite: client, errors, taxonomy, SR, images (99 tests)
+- E2E workflow test against real API
+- Vitest configs for unit, e2e, and combined test runs
+- Realistic test fixtures with real API data
+- `prepublishOnly` script to ensure build + test before publish
+- CI now runs unit tests (not just type check)
+- Publish workflow runs lint + tests before publishing
+- `taxonomy.getCategories()` - List categories with pagination
+- `taxonomy.getBrands()` - Search brands with pagination
+- `taxonomy.getBrandsForType()` - Get brands for a specific type
+
+### Fixed
+
+- Default API URL changed from staging to production
+- HTTP 504 now maps to `TIMEOUT_ERROR` instead of `SERVER_ERROR`
+- Client-side timeout (`ECONNABORTED`) correctly maps to `TIMEOUT_ERROR`
+- README error codes table matched to actual SDK codes
+- README examples use safe null checks instead of force unwraps
+
+### Changed
+
+- Removed legacy test scripts (`run-step.ts`, `run-workflow.ts`)
+- Cleaned up obvious comments and section dividers
+- Aligned `types.ts` with real API response shapes (media fields, nullable supplement)
+
 ## [0.1.0] - 2026-02-05
 
 ### Added
