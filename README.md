@@ -41,19 +41,90 @@ await legitmark.sr.submit(sr.uuid);
 
 ## Usage Guide
 
-### Step 1: Get Taxonomy
+### Step 1: Get Taxonomy (Categories, Types, Brands)
+
+The taxonomy is hierarchical: **Categories → Types → Brands**. You need UUIDs for each to create a Service Request.
+
+#### Option A: Get Full Tree
+
+Get all categories with their nested types in one call:
 
 ```typescript
-const { categories, metadata } = await legitmark.taxonomy.getTree({ activeOnly: true });
+const { data: categories, metadata } = await legitmark.taxonomy.getTree({ activeOnly: true });
 
 console.log(`Found ${metadata.total_categories} categories`);
 
 for (const category of categories) {
   console.log(`${category.name}: ${category.types?.length} types`);
+  for (const type of category.types ?? []) {
+    console.log(`  - ${type.name} (${type.uuid})`);
+  }
 }
 ```
 
-### Step 2: Create Service Request
+#### Option B: List Categories
+
+Get a paginated list of categories:
+
+```typescript
+const { data: categories } = await legitmark.taxonomy.getCategories();
+
+const footwear = categories.find(c => c.name === 'Footwear');
+console.log(`Footwear UUID: ${footwear?.uuid}`);
+```
+
+#### Option C: Get Brands for a Type
+
+After selecting a category and type, get available brands:
+
+```typescript
+// After user selects "Sneakers" type
+const { data: brands } = await legitmark.taxonomy.getBrandsForType(sneakersTypeUuid);
+
+for (const brand of brands) {
+  console.log(`${brand.name} (${brand.uuid})`);
+}
+// Output: Nike (abc-123), Adidas (def-456), ...
+```
+
+#### Option D: Search All Brands
+
+Search across all brands by name:
+
+```typescript
+const { data: brands } = await legitmark.taxonomy.getBrands({ search: 'Nike' });
+
+const nike = brands[0];
+console.log(`Nike UUID: ${nike?.uuid}`);
+```
+
+#### Complete Lookup Example
+
+```typescript
+// 1. Get taxonomy tree
+const { data: categories } = await legitmark.taxonomy.getTree();
+
+// 2. Find the category
+const footwear = categories.find(c => c.name === 'Footwear');
+if (!footwear) throw new Error('Category not found');
+const categoryUuid = footwear.uuid;
+
+// 3. Find the type within the category  
+const sneakers = footwear.types?.find(t => t.name === 'Sneakers');
+if (!sneakers) throw new Error('Type not found');
+const typeUuid = sneakers.uuid;
+
+// 4. Get brands available for this type
+const { data: brands } = await legitmark.taxonomy.getBrandsForType(typeUuid);
+const nike = brands.find(b => b.name === 'Nike');
+if (!nike) throw new Error('Brand not found');
+const brandUuid = nike.uuid;
+
+// Now you have all UUIDs needed to create a Service Request
+console.log({ categoryUuid, typeUuid, brandUuid });
+```
+
+### Step 2: Create Service Request (Draft)
 
 ```typescript
 const { sr } = await legitmark.sr.create({
@@ -151,10 +222,20 @@ const { sr } = await legitmark.sr.submit(srUuid);            // Submit for authe
 ### Taxonomy (`legitmark.taxonomy`)
 
 ```typescript
-const { categories, metadata } = await legitmark.taxonomy.getTree();
+// Get full taxonomy tree (categories with nested types)
+const { data: categories } = await legitmark.taxonomy.getTree();
+const { data: categories } = await legitmark.taxonomy.getTree({ activeOnly: true });
 
-// With options
-const { categories } = await legitmark.taxonomy.getTree({ activeOnly: true });
+// List categories (paginated)
+const { data: categories } = await legitmark.taxonomy.getCategories();
+const { data: categories } = await legitmark.taxonomy.getCategories({ page: 1, pageSize: 50 });
+
+// Get all brands (paginated, searchable)
+const { data: brands } = await legitmark.taxonomy.getBrands();
+const { data: brands } = await legitmark.taxonomy.getBrands({ search: 'Nike' });
+
+// Get brands available for a specific type
+const { data: brands } = await legitmark.taxonomy.getBrandsForType(typeUuid);
 ```
 
 ### Images (`legitmark.images`)
@@ -252,10 +333,11 @@ Ensure you're using a Partner API key, not a user token. Partner keys always sta
 |-------------|------------|-------------|
 | 400 | `VALIDATION_ERROR` | Invalid request parameters |
 | 401 | `AUTHENTICATION_ERROR` | Invalid or expired API key |
-| 403 | `PERMISSION_ERROR` | Insufficient permissions |
-| 404 | `NOT_FOUND` | Resource not found |
+| 403 | `AUTHENTICATION_ERROR` | Insufficient permissions |
+| 404 | `NOT_FOUND_ERROR` | Resource not found |
 | 429 | `RATE_LIMIT_ERROR` | Too many requests |
-| 500+ | `SERVER_ERROR` | Server-side error (retryable) |
+| 500-503 | `SERVER_ERROR` | Server-side error (retryable) |
+| 504 | `TIMEOUT_ERROR` | Gateway timeout (retryable) |
 | N/A | `NETWORK_ERROR` | Connection failed (retryable) |
 | N/A | `TIMEOUT_ERROR` | Request timed out (retryable) |
 
@@ -284,11 +366,20 @@ The SDK uses ES modules and is compatible with modern bundlers (webpack, esbuild
 ## Development
 
 ```bash
-# Build TypeScript
+# Build
 npm run build
 
-# Run linter
+# Lint
 npm run lint
+
+# Run unit tests
+npm run test:unit
+
+# Run E2E tests (requires .env with API key)
+npm run test:e2e
+
+# Run all tests
+npm run test:all
 ```
 
 ## Contributing

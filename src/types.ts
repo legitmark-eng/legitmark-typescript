@@ -1,14 +1,4 @@
 /**
- * Legitmark Partner SDK - Type Definitions
- * 
- * @packageDocumentation
- */
-
-// ============================================================================
-// SDK Configuration
-// ============================================================================
-
-/**
  * Configuration options for the Partner SDK client.
  * 
  * For most use cases, use the simpler {@link Legitmark} class instead,
@@ -61,10 +51,6 @@ export interface RequestOptions {
    */
   readonly timeout?: number;
 }
-
-// ============================================================================
-// API Response Types
-// ============================================================================
 
 /**
  * Standard API response wrapper.
@@ -120,10 +106,6 @@ export interface ErrorResponse {
   };
 }
 
-// ============================================================================
-// Taxonomy Types (Step 1: Browse Catalog)
-// ============================================================================
-
 /**
  * A product category in the Legitmark taxonomy.
  * Categories are the top level of the hierarchy.
@@ -137,6 +119,8 @@ export interface Category {
   readonly active: boolean;
   /** Display order (lower = first) */
   readonly ordinal: number;
+  /** URL to category icon/image */
+  readonly media?: string;
   /** Nested types within this category */
   readonly types?: readonly Type[];
 }
@@ -153,6 +137,8 @@ export interface Type {
   readonly active: boolean;
   /** Display order (lower = first) */
   readonly ordinal: number;
+  /** URL to type icon/image */
+  readonly media?: string;
 }
 
 /**
@@ -165,6 +151,8 @@ export interface Brand {
   readonly name: string;
   readonly description?: string;
   readonly active: boolean;
+  /** URL to brand logo/icon */
+  readonly media?: string;
 }
 
 /**
@@ -200,10 +188,6 @@ export interface GetTreeOptions {
   /** Only return active categories and types (default: true) */
   readonly activeOnly?: boolean;
 }
-
-// ============================================================================
-// Service Request Types (Steps 2-3: Create & Configure)
-// ============================================================================
 
 /** Primary state representing the main workflow stage */
 export type SRPrimaryState = 
@@ -257,7 +241,8 @@ export type SRSupplementState =
  */
 export interface SRState {
   readonly primary: SRPrimaryState;
-  readonly supplement: SRSupplementState;
+  /** Supplement state (null when primary is DRAFT) */
+  readonly supplement: SRSupplementState | null;
 }
 
 /**
@@ -271,13 +256,22 @@ export interface SRSummary {
 }
 
 /**
+ * Reference to a taxonomy entity with optional media.
+ */
+export interface TaxonomyRef {
+  readonly uuid: string;
+  readonly name: string;
+  readonly media?: string;
+}
+
+/**
  * Item details including category, type, and brand.
  */
 export interface SRItem {
-  readonly category?: { readonly uuid: string; readonly name: string };
-  readonly type?: { readonly uuid: string; readonly name: string };
-  readonly brand?: { readonly uuid: string; readonly name: string };
-  readonly model?: { readonly uuid: string; readonly name: string };
+  readonly category?: TaxonomyRef;
+  readonly type?: TaxonomyRef;
+  readonly brand?: TaxonomyRef;
+  readonly model?: TaxonomyRef;
 }
 
 /**
@@ -474,10 +468,6 @@ export interface GetSRResponse {
   readonly sr: ServiceRequest;
 }
 
-// ============================================================================
-// Media Upload Types (Step 4: Upload Photos)
-// ============================================================================
-
 /**
  * Response from the upload intent endpoint.
  * Contains a pre-signed URL for direct S3 upload.
@@ -487,10 +477,6 @@ export interface UploadIntentResponse {
   /** Pre-signed S3 URL for PUT upload */
   readonly url: string;
 }
-
-// ============================================================================
-// Progress Types (Step 5: Track Progress)
-// ============================================================================
 
 /**
  * Upload progress data for a Service Request.
@@ -560,10 +546,6 @@ export interface GetSRWithSidesResponse extends GetSRResponse {
   };
 }
 
-// ============================================================================
-// Submit Types (Step 6: Submit for Authentication)
-// ============================================================================
-
 /**
  * Response from submitting a Service Request.
  */
@@ -576,10 +558,6 @@ export interface SubmitSRResponse {
     readonly state: SRState;
   };
 }
-
-// ============================================================================
-// Workflow Types
-// ============================================================================
 
 /**
  * Current state of a WorkflowRunner execution.
@@ -611,10 +589,6 @@ export interface WorkflowState {
   /** Any errors encountered */
   readonly errors: readonly string[];
 }
-
-// ============================================================================
-// Error Types
-// ============================================================================
 
 /**
  * Error codes returned by the SDK.

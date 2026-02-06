@@ -43,8 +43,14 @@
     "build": "tsup",
     "lint": "eslint src/ tests/",
     "lint:fix": "eslint src/ tests/ --fix",
-    "test": "ts-node tests/run-workflow.ts",
-    "test:step": "ts-node tests/run-step.ts"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:unit": "vitest run --config vitest.config.ts",
+    "test:e2e": "vitest run --config vitest.e2e.config.ts",
+    "test:all": "vitest run --config vitest.all.config.ts",
+    "test:ci": "vitest run --reporter=verbose",
+    "test:coverage": "vitest run --coverage",
+    "prepublishOnly": "npm run build && npm run test:unit"
   },
   "dependencies": {
     "axios": "^1.6.0",
@@ -57,7 +63,8 @@
     "ts-node": "^10.9.2",
     "tsup": "^8.5.1",
     "typescript": "^5.3.0",
-    "typescript-eslint": "^8.54.0"
+    "typescript-eslint": "^8.54.0",
+    "vitest": "^4.0.18"
   },
   "engines": {
     "node": ">=18.0.0"
