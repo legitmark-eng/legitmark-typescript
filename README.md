@@ -1,6 +1,7 @@
 # Legitmark TypeScript SDK
 
 [![CI](https://github.com/legitmark-eng/legitmark-typescript/actions/workflows/ci.yml/badge.svg)](https://github.com/legitmark-eng/legitmark-typescript/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/tests-99%20passing-brightgreen)](https://github.com/legitmark-eng/legitmark-typescript/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/legitmark.svg)](https://www.npmjs.com/package/legitmark)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
 
@@ -17,7 +18,7 @@ npm install legitmark
 ```typescript
 import { Legitmark } from 'legitmark';
 
-const legitmark = new Legitmark('leo_your_api_key');
+const legitmark = new Legitmark('leo_your_api_key'); // Get your key at engineering@legitmark.com
 
 // Create a service request
 const { sr } = await legitmark.sr.create({
@@ -278,6 +279,10 @@ The default `shouldRetry` function uses `LegitmarkError.isRetryable`, which retu
 - 429 Too Many Requests
 - 500+ Server Errors
 - Network/timeout errors
+
+## Getting an API Key
+
+Contact **engineering@legitmark.com** to request a Partner API key.
 
 ## Configuration
 
