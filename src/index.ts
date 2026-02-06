@@ -116,36 +116,27 @@
  * @module legitmark
  */
 
-// ============================================================================
-// Client Exports
-// ============================================================================
-
 export {
-  // Primary client classes
   Legitmark,
   PartnerClient,
-  
-  // Factory functions
   createClientFromEnv,
   validateEnvironment,
-  
-  // Error classes
   LegitmarkError,
   ConfigurationError,
-  
-  // Utilities
   withRetry,
-  
-  // Constants
   SDK_VERSION,
   IMAGE_CONTENT_TYPES,
 } from './client';
 
 export type { ImageContentType, RetryOptions } from './client';
 
-// ============================================================================
-// Workflow Exports
-// ============================================================================
+export type {
+  ListCategoriesResponse,
+  ListCategoriesOptions,
+  ListBrandsResponse,
+  ListBrandsOptions,
+  GetBrandsForTypeResponse,
+} from './resources';
 
 export {
   WorkflowRunner,
@@ -160,35 +151,25 @@ export type {
   WorkflowStepName,
 } from './workflow';
 
-// ============================================================================
-// Type Exports
-// ============================================================================
-
 export type {
-  // Configuration
   PartnerConfig,
   RequestOptions,
-  
-  // API Responses
   ApiResponse,
   PaginatedResponse,
   ValidationError,
   ErrorResponse,
-  
-  // Taxonomy
   Category,
   Type,
   Brand,
   Model,
   CatalogTreeResponse,
   GetTreeOptions,
-  
-  // Service Requests
   SRPrimaryState,
   SRSupplementState,
   SRState,
   SRSummary,
   SRItem,
+  TaxonomyRef,
   Side,
   SideGroup,
   SRRequirements,
@@ -197,23 +178,13 @@ export type {
   CreateSRResponse,
   GetSROptions,
   GetSRResponse,
-  
-  // Media Upload
   UploadIntentResponse,
-  
-  // Progress
   ProgressData,
   SideWithMedia,
   MediaVersion,
   GetSRWithSidesResponse,
-  
-  // Submit
   SubmitSRResponse,
-  
-  // Workflow
   WorkflowState,
-  
-  // Errors
   LegitmarkErrorCode,
   LegitmarkErrorContext,
 } from './types';

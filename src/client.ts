@@ -23,8 +23,8 @@ import { Taxonomy, ServiceRequests, Images } from './resources';
 const API_KEY_PREFIX = 'leo_';
 const DEFAULT_TIMEOUT_MS = 30_000;
 const UPLOAD_TIMEOUT_MS = 60_000;
-const PRODUCTION_API_URL = 'https://api.legitmark.com';
-const PRODUCTION_ASSET_URL = 'https://media.legitmark.com';
+const DEFAULT_API_URL = 'https://api.legitmark.com';
+const DEFAULT_ASSET_URL = 'https://media.legitmark.com';
 
 export const IMAGE_CONTENT_TYPES = {
   JPEG: 'image/jpeg',
@@ -306,27 +306,22 @@ export class PartnerClient {
    * @throws {ConfigurationError} If required configuration is missing
    */
   constructor(config: PartnerConfig, requestOptions?: RequestOptions) {
-    // Validate required config
     if (!config.apiKey) {
       throw new ConfigurationError('apiKey is required', [
         'Get your API key from the Legitmark Partner Dashboard',
       ]);
     }
 
-    // Store per-request options
     this.requestOptions = requestOptions;
 
-    // Normalize config with defaults, applying request option overrides
     this.config = {
       apiKey: config.apiKey,
       timeout: requestOptions?.timeout ?? config.timeout ?? DEFAULT_TIMEOUT_MS,
       debug: config.debug ?? false,
     };
 
-    // Initialize logger
     this.logger = createLogger(this.config.debug);
 
-    // Validate API key format (only on initial construction, not on withOptions)
     if (!requestOptions && !this.config.apiKey.startsWith(API_KEY_PREFIX)) {
       this.logger.warn(
         `API key does not start with '${API_KEY_PREFIX}' prefix. ` +
@@ -334,14 +329,12 @@ export class PartnerClient {
       );
     }
 
-    const baseUrl = PRODUCTION_API_URL;
-    const assetUrl = PRODUCTION_ASSET_URL;
+    const baseUrl = process.env.LEGITMARK_BASE_URL || DEFAULT_API_URL;
+    const assetUrl = DEFAULT_ASSET_URL;
 
-    // Create HTTP clients
     this.platformClient = this.createHttpClient(baseUrl);
     this.assetClient = this.createHttpClient(assetUrl);
 
-    // Only log initialization on first construction
     if (!requestOptions) {
       this.logger.debug(`Initialized PartnerClient v${SDK_VERSION}`, {
         baseUrl,
@@ -350,7 +343,6 @@ export class PartnerClient {
       });
     }
 
-    // Initialize resource namespaces
     this.taxonomy = new Taxonomy(this);
     this.sr = new ServiceRequests(this);
     this.images = new Images(this);
@@ -454,16 +446,13 @@ export class PartnerClient {
       },
     });
 
-    // Request interceptor for logging and request ID
     client.interceptors.request.use((request) => {
-      // Add unique request ID for debugging
       const requestId = `req_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
       request.headers['X-Request-Id'] = requestId;
       this.logger.debug(`${request.method?.toUpperCase()} ${request.url} [${requestId}]`);
       return request;
     });
 
-    // Response interceptor for logging
     client.interceptors.response.use(
       (response) => {
         const requestId = response.config.headers['X-Request-Id'] || '';
@@ -484,29 +473,29 @@ export class PartnerClient {
    * Transform an error into a structured LegitmarkError.
    */
   private handleError(error: unknown, endpoint?: string): never {
-    // Already a LegitmarkError
     if (error instanceof LegitmarkError) {
       throw error;
     }
 
-    // Axios error
     if (axios.isAxiosError(error)) {
       const axiosError = error as AxiosError<ErrorResponse>;
       const status = axiosError.response?.status;
       const data = axiosError.response?.data;
       const apiMessage = data?.error?.message ?? axiosError.message;
       
-      // Extract request ID from headers for debugging
       const requestId = axiosError.response?.headers?.['x-request-id'] 
         ?? axiosError.response?.headers?.['x-amzn-requestid']
         ?? undefined;
 
-      // Determine error type based on status code
       let code: LegitmarkErrorCode;
       let isRetryable = false;
       let suggestions: string[] = [];
 
-      if (!status) {
+      if (!status && axiosError.code === 'ECONNABORTED') {
+        code = 'TIMEOUT_ERROR';
+        isRetryable = true;
+        suggestions = ['Increase the timeout value', 'Check network latency'];
+      } else if (!status) {
         code = 'NETWORK_ERROR';
         isRetryable = true;
         suggestions = ['Check your internet connection', 'Verify the API URL is correct'];
@@ -528,14 +517,14 @@ export class PartnerClient {
         code = 'RATE_LIMIT_ERROR';
         isRetryable = true;
         suggestions = ['Wait before retrying', 'Consider implementing exponential backoff'];
+      } else if (status === 504) {
+        code = 'TIMEOUT_ERROR';
+        isRetryable = true;
+        suggestions = ['The upstream server timed out', 'Retry after a short delay'];
       } else if (status >= 500) {
         code = 'SERVER_ERROR';
         isRetryable = true;
         suggestions = ['The service may be temporarily unavailable', 'Retry after a short delay'];
-      } else if (axiosError.code === 'ECONNABORTED') {
-        code = 'TIMEOUT_ERROR';
-        isRetryable = true;
-        suggestions = ['Increase the timeout value', 'Check network latency'];
       } else {
         code = 'UNKNOWN_ERROR';
       }
@@ -553,7 +542,6 @@ export class PartnerClient {
       });
     }
 
-    // Unknown error
     throw new LegitmarkError('UNKNOWN_ERROR', String(error), {
       cause: error,
     });
@@ -594,7 +582,6 @@ export function validateEnvironment(): {
     suggestions.push('Copy .env.example to .env and add your API key');
     suggestions.push('Get your API key from the Legitmark Partner Dashboard');
   } else if (!process.env.LEGITMARK_API_KEY.startsWith(API_KEY_PREFIX)) {
-    // Just a warning, don't block - allows JWT tokens for testing
     suggestions.push(`Note: API key doesn't start with '${API_KEY_PREFIX}' (expected for Partner keys)`);
   }
 
