@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { ServiceRequests } from '../src/resources/sr';
-import type { ResourceClient } from '../src/resources/taxonomy';
+import type { ResourceClient } from '../src/resources/client';
 import { createMockClient } from './utils';
 import {
   FIXTURE_SR,

@@ -75,62 +75,27 @@
  * }
  * ```
  * 
- * ## Using WorkflowRunner (Higher-Level Abstraction)
- * 
- * ```typescript
- * import { PartnerClient, WorkflowRunner } from 'legitmark';
- * 
- * const client = new PartnerClient({ ... });
- * 
- * const workflow = new WorkflowRunner(client, {
- *   onStepComplete: (step, name) => console.log(`✓ ${name}`),
- *   getImageForSide: async (side) => fs.readFileSync(`./photos/${side.name}.jpg`),
- * });
- * 
- * await workflow.run({
- *   service: 'service-uuid',
- *   item: { category: '...', type: '...', brand: '...' },
- * });
- * ```
- * 
- * ## Error Handling
- * 
- * ```typescript
- * import { LegitmarkError } from 'legitmark';
- * 
- * try {
- *   await client.submitServiceRequest(srUuid);
- * } catch (error) {
- *   if (error instanceof LegitmarkError) {
- *     console.error(`[${error.code}] ${error.message}`);
- *     console.log('Suggestions:', error.suggestions);
- *     
- *     if (error.isRetryable) {
- *       // Safe to retry
- *     }
- *   }
- * }
- * ```
- * 
  * @packageDocumentation
  * @module legitmark
  */
 
-export {
-  Legitmark,
-  PartnerClient,
-  createClientFromEnv,
-  validateEnvironment,
-  LegitmarkError,
-  ConfigurationError,
-  withRetry,
-  SDK_VERSION,
-  IMAGE_CONTENT_TYPES,
-} from './client';
+// Client
+export { Legitmark, PartnerClient, SDK_VERSION, IMAGE_CONTENT_TYPES } from './client';
+export type { ImageContentType } from './client';
 
-export type { ImageContentType, RetryOptions } from './client';
+// Errors
+export { LegitmarkError, ConfigurationError } from './errors';
 
+// Retry
+export { withRetry } from './retry';
+export type { RetryOptions } from './retry';
+
+// Environment
+export { createClientFromEnv, validateEnvironment } from './env';
+
+// Resources
 export type {
+  ResourceClient,
   ListCategoriesResponse,
   ListCategoriesOptions,
   ListBrandsResponse,
@@ -138,6 +103,7 @@ export type {
   GetBrandsForTypeResponse,
 } from './resources';
 
+// Workflow
 export {
   WorkflowRunner,
   WORKFLOW_STEPS,
@@ -151,6 +117,28 @@ export type {
   WorkflowStepName,
 } from './workflow';
 
+// Webhooks
+export {
+  WEBHOOK_EVENT_TYPES,
+  parseWebhookEvent,
+  isAuthentic,
+  isCounterfeit,
+  isCancelled,
+  needsResubmission,
+  isQcApproved,
+  isAuthenticationInProgress,
+} from './webhooks';
+
+export type {
+  WebhookEventType,
+  LegitmarkWebhookEvent,
+  StateChangeEvent,
+  MediaRejectedEvent,
+  InvalidateSrEvent,
+  RejectedSide,
+} from './webhooks';
+
+// Types
 export type {
   PartnerConfig,
   RequestOptions,

@@ -1,26 +1,16 @@
-/**
- * Legitmark Partner SDK - API Client
- * 
- * A typed TypeScript client for the Legitmark Partner API.
- * Provides methods for the complete authentication workflow:
- * taxonomy lookup → create SR → upload images → submit.
- * 
- * @packageDocumentation
- */
-
 import axios, { AxiosInstance, AxiosError } from 'axios';
 
-import {
+import type {
   PartnerConfig,
   RequestOptions,
   ErrorResponse,
   LegitmarkErrorCode,
-  LegitmarkErrorContext,
 } from './types';
 
+import { LegitmarkError, ConfigurationError } from './errors';
 import { Taxonomy, ServiceRequests, Images } from './resources';
 
-const API_KEY_PREFIX = 'leo_';
+export const API_KEY_PREFIX = 'leo_';
 const DEFAULT_TIMEOUT_MS = 30_000;
 const UPLOAD_TIMEOUT_MS = 60_000;
 const DEFAULT_API_URL = 'https://api.legitmark.com';
@@ -34,94 +24,10 @@ export const IMAGE_CONTENT_TYPES = {
 
 export type ImageContentType = typeof IMAGE_CONTENT_TYPES[keyof typeof IMAGE_CONTENT_TYPES];
 
-export const SDK_VERSION = '0.1.1';
+export const SDK_VERSION = '0.2.0';
 
 const LOGGER_PREFIX = 'LegitmarkPartnerSDK';
-const DEFAULT_RETRY_ATTEMPTS = 3;
-const DEFAULT_RETRY_DELAY_MS = 1000;
-const RETRY_BACKOFF_MULTIPLIER = 2;
 const S3_UPLOAD_HEADERS = { CACHE_CONTROL: 'max-age=10', ACL: 'public-read' } as const;
-
-/**
- * Custom error class for Legitmark SDK errors.
- * Provides structured error information with codes, context, and suggestions.
- * 
- * @example
- * ```typescript
- * try {
- *   await client.submitServiceRequest(srUuid);
- * } catch (error) {
- *   if (error instanceof LegitmarkError) {
- *     console.error(`[${error.code}] ${error.message}`);
- *     if (error.isRetryable) {
- *       // Implement retry logic
- *     }
- *   }
- * }
- * ```
- */
-export class LegitmarkError extends Error {
-  /** Error classification code */
-  readonly code: LegitmarkErrorCode;
-  /** Additional context about the error */
-  readonly context: LegitmarkErrorContext;
-  /** Whether the operation can be retried */
-  readonly isRetryable: boolean;
-  /** Suggested actions to resolve the error */
-  readonly suggestions: readonly string[];
-  /** Original error that caused this error */
-  readonly cause?: unknown;
-
-  constructor(
-    code: LegitmarkErrorCode,
-    message: string,
-    options: {
-      context?: LegitmarkErrorContext;
-      isRetryable?: boolean;
-      suggestions?: string[];
-      cause?: unknown;
-    } = {}
-  ) {
-    super(message);
-    this.name = 'LegitmarkError';
-    this.code = code;
-    this.context = options.context ?? {};
-    this.isRetryable = options.isRetryable ?? false;
-    this.suggestions = options.suggestions ?? [];
-    this.cause = options.cause;
-  }
-
-  /** Returns a formatted error string for logging */
-  toLogString(): string {
-    const parts = [`[${this.code}] ${this.message}`];
-    if (this.context.statusCode) {
-      parts.push(`Status: ${this.context.statusCode}`);
-    }
-    if (this.context.endpoint) {
-      parts.push(`Endpoint: ${this.context.endpoint}`);
-    }
-    if (this.context.requestId) {
-      parts.push(`RequestID: ${this.context.requestId}`);
-    }
-    if (this.suggestions.length > 0) {
-      parts.push(`Suggestions: ${this.suggestions.join(', ')}`);
-    }
-    return parts.join(' | ');
-  }
-}
-
-/**
- * Configuration error - thrown when SDK is misconfigured.
- */
-export class ConfigurationError extends LegitmarkError {
-  constructor(message: string, suggestions: string[] = []) {
-    super('CONFIGURATION_ERROR', message, {
-      isRetryable: false,
-      suggestions,
-    });
-    this.name = 'ConfigurationError';
-  }
-}
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -155,108 +61,25 @@ function createLogger(enabled: boolean, prefix: string = LOGGER_PREFIX): Logger 
 }
 
 /**
- * Options for retry behavior.
- */
-export interface RetryOptions {
-  /** Maximum number of retry attempts (default: 3) */
-  attempts?: number;
-  /** Initial delay between retries in ms (default: 1000) */
-  delay?: number;
-  /** Use exponential backoff (default: true) */
-  exponentialBackoff?: boolean;
-  /** Only retry if this returns true (default: checks isRetryable) */
-  shouldRetry?: (error: unknown) => boolean;
-  /** Called before each retry attempt */
-  onRetry?: (error: unknown, attempt: number) => void;
-}
-
-/**
- * Retry a function with exponential backoff.
- * 
- * @param fn - Async function to retry
- * @param options - Retry configuration
- * @returns Result of the function
- * 
- * @example
- * ```typescript
- * import { withRetry, Legitmark } from 'legitmark';
- * 
- * const legitmark = new Legitmark('leo_your_key');
- * 
- * // Retry up to 3 times with exponential backoff
- * const result = await withRetry(
- *   () => legitmark.submitServiceRequest(srUuid),
- *   { 
- *     attempts: 3,
- *     onRetry: (err, attempt) => console.log(`Retry ${attempt}...`),
- *   }
- * );
- * ```
- */
-export async function withRetry<T>(
-  fn: () => Promise<T>,
-  options: RetryOptions = {}
-): Promise<T> {
-  const {
-    attempts = DEFAULT_RETRY_ATTEMPTS,
-    delay = DEFAULT_RETRY_DELAY_MS,
-    exponentialBackoff = true,
-    shouldRetry = (error) => error instanceof LegitmarkError && error.isRetryable,
-    onRetry,
-  } = options;
-
-  let lastError: unknown;
-  
-  for (let attempt = 1; attempt <= attempts; attempt++) {
-    try {
-      return await fn();
-    } catch (error) {
-      lastError = error;
-      
-      if (attempt === attempts || !shouldRetry(error)) {
-        throw error;
-      }
-      
-      onRetry?.(error, attempt);
-      
-      const waitTime = exponentialBackoff 
-        ? delay * Math.pow(RETRY_BACKOFF_MULTIPLIER, attempt - 1)
-        : delay;
-        
-      await new Promise(resolve => setTimeout(resolve, waitTime));
-    }
-  }
-  
-  throw lastError;
-}
-
-/**
  * Legitmark Partner API Client.
- * 
+ *
  * Provides resources for the complete authentication workflow:
  * - `legitmark.taxonomy` - Browse categories, types, brands
  * - `legitmark.sr` - Create and manage service requests
  * - `legitmark.images` - Upload photos
- * 
+ *
  * @example
  * ```typescript
  * import { Legitmark } from 'legitmark';
- * 
+ *
  * const legitmark = new Legitmark('leo_your_api_key');
- * 
- * // 1. Get taxonomy
+ *
  * const { categories } = await legitmark.taxonomy.getTree();
- * 
- * // 2. Create a service request
  * const { sr } = await legitmark.sr.create({
  *   service: 'service-uuid',
  *   item: { category: '...', type: '...', brand: '...' },
  * });
- * 
- * // 3. Upload required photos
  * await legitmark.images.uploadForSide(sr.uuid, sideUuid, './photo.jpg');
- * 
- * // 4. Submit for authentication
  * await legitmark.sr.submit(sr.uuid);
  * ```
  */
@@ -269,7 +92,7 @@ export class PartnerClient {
 
   /**
    * Taxonomy - access product categories, types, brands, models.
-   * 
+   *
    * @example
    * ```typescript
    * const { categories } = await legitmark.taxonomy.getTree();
@@ -279,7 +102,7 @@ export class PartnerClient {
 
   /**
    * Service Requests - create and manage authentication requests.
-   * 
+   *
    * @example
    * ```typescript
    * const { sr } = await legitmark.sr.create({ ... });
@@ -290,7 +113,7 @@ export class PartnerClient {
 
   /**
    * Images - upload photos for service requests.
-   * 
+   *
    * @example
    * ```typescript
    * await legitmark.images.uploadForSide(srUuid, sideUuid, buffer);
@@ -300,7 +123,7 @@ export class PartnerClient {
 
   /**
    * Create a new PartnerClient instance.
-   * 
+   *
    * @param config - Client configuration
    * @param requestOptions - Per-request option overrides (internal use)
    * @throws {ConfigurationError} If required configuration is missing
@@ -350,21 +173,13 @@ export class PartnerClient {
 
   /**
    * Create a new client instance with per-request option overrides.
-   * 
-   * This method returns a new client with the specified options applied
-   * to all subsequent requests. Useful for customizing timeout for specific
-   * operations without modifying the base client.
-   * 
+   *
    * @param options - Request options to override
    * @returns New client instance with applied options
-   * 
+   *
    * @example
    * ```typescript
-   * // Use longer timeout for image uploads
    * await legitmark.withOptions({ timeout: 60000 }).images.uploadForSide(...);
-   * 
-   * // Chain with resource methods
-   * await legitmark.withOptions({ timeout: 120000 }).sr.submit(uuid);
    * ```
    */
   withOptions(options: RequestOptions): PartnerClient {
@@ -378,7 +193,7 @@ export class PartnerClient {
     );
   }
 
-  /** @internal GET request to platform API */
+  /** @internal */
   async _get<T>(endpoint: string, params?: Record<string, string>): Promise<T> {
     try {
       const url = params ? `${endpoint}?${new URLSearchParams(params)}` : endpoint;
@@ -389,7 +204,7 @@ export class PartnerClient {
     }
   }
 
-  /** @internal POST request to platform API */
+  /** @internal */
   async _post<T>(endpoint: string, data?: unknown): Promise<T> {
     try {
       const response = await this.platformClient.post<T>(endpoint, data);
@@ -399,7 +214,7 @@ export class PartnerClient {
     }
   }
 
-  /** @internal GET request to asset API */
+  /** @internal */
   async _getAsset<T>(endpoint: string, params?: Record<string, string>): Promise<T> {
     try {
       const url = params ? `${endpoint}?${new URLSearchParams(params)}` : endpoint;
@@ -410,10 +225,9 @@ export class PartnerClient {
     }
   }
 
-  /** @internal Upload to signed URL */
+  /** @internal */
   async _uploadToUrl(url: string, data: Buffer, contentType: string): Promise<void> {
     try {
-      // The presigned URL requires specific headers that match the signed headers
       await axios.put(url, data, {
         headers: {
           'Content-Type': contentType,
@@ -427,14 +241,11 @@ export class PartnerClient {
     }
   }
 
-  /** @internal Logging */
+  /** @internal */
   _log(level: 'info' | 'debug' | 'warn' | 'error', message: string, meta?: unknown): void {
     this.logger[level](message, meta);
   }
 
-  /**
-   * Create a configured Axios instance.
-   */
   private createHttpClient(baseURL: string): AxiosInstance {
     const client = axios.create({
       baseURL,
@@ -469,9 +280,6 @@ export class PartnerClient {
     return client;
   }
 
-  /**
-   * Transform an error into a structured LegitmarkError.
-   */
   private handleError(error: unknown, endpoint?: string): never {
     if (error instanceof LegitmarkError) {
       throw error;
@@ -549,122 +357,27 @@ export class PartnerClient {
 }
 
 /**
- * Validate environment configuration for the SDK.
- * 
- * Call this before `createClientFromEnv()` to get helpful error messages
- * if the environment is not properly configured.
- * 
- * @returns Validation result with any errors and suggestions
- * 
- * @example
- * ```typescript
- * const validation = validateEnvironment();
- * 
- * if (!validation.valid) {
- *   console.error('Configuration errors:', validation.errors);
- *   console.log('Suggestions:', validation.suggestions);
- *   process.exit(1);
- * }
- * 
- * const client = createClientFromEnv();
- * ```
- */
-export function validateEnvironment(): {
-  valid: boolean;
-  errors: string[];
-  suggestions: string[];
-} {
-  const errors: string[] = [];
-  const suggestions: string[] = [];
-
-  if (!process.env.LEGITMARK_API_KEY) {
-    errors.push('LEGITMARK_API_KEY is not set');
-    suggestions.push('Copy .env.example to .env and add your API key');
-    suggestions.push('Get your API key from the Legitmark Partner Dashboard');
-  } else if (!process.env.LEGITMARK_API_KEY.startsWith(API_KEY_PREFIX)) {
-    suggestions.push(`Note: API key doesn't start with '${API_KEY_PREFIX}' (expected for Partner keys)`);
-  }
-
-  return {
-    valid: errors.length === 0,
-    errors,
-    suggestions,
-  };
-}
-
-/**
- * Create a PartnerClient from environment variables.
- * 
- * Reads configuration from the following environment variables:
- * - `LEGITMARK_API_KEY` - Partner API key (required)
- * - `LEGITMARK_DEBUG` - Enable debug logging (optional: 'true'/'false')
- * 
- * @returns Configured PartnerClient instance
- * @throws {ConfigurationError} If required environment variables are missing
- * 
- * @example
- * ```typescript
- * // Ensure environment is configured
- * const validation = validateEnvironment();
- * if (!validation.valid) {
- *   throw new Error(validation.errors.join(', '));
- * }
- * 
- * const client = createClientFromEnv();
- * ```
- */
-export function createClientFromEnv(): PartnerClient {
-  const validation = validateEnvironment();
-  
-  if (!validation.valid) {
-    throw new ConfigurationError(
-      validation.errors.join('; '),
-      validation.suggestions
-    );
-  }
-
-  return new PartnerClient({
-    apiKey: process.env.LEGITMARK_API_KEY!,
-    debug: process.env.LEGITMARK_DEBUG === 'true',
-  });
-}
-
-/**
  * Simplified Legitmark SDK client.
- * 
- * A convenience wrapper that provides sensible production defaults.
- * For most use cases, just pass your API key.
- * 
+ *
  * @example
  * ```typescript
  * import { Legitmark } from 'legitmark';
- * 
- * // Simple - uses production defaults
+ *
  * const legitmark = new Legitmark('leo_your_api_key');
- * 
- * // With debug logging
  * const legitmark = new Legitmark('leo_your_api_key', { debug: true });
- * 
- * // Create a service request
- * const sr = await legitmark.createServiceRequest({
- *   service: 'service-uuid',
- *   item: { category: '...', type: '...', brand: '...' },
- * });
  * ```
  */
 export class Legitmark extends PartnerClient {
   /**
    * Create a new Legitmark client.
-   * 
+   *
    * @param apiKey - Your Partner API key (format: leo_xxx)
    * @param options - Optional configuration overrides
    */
   constructor(
     apiKey: string,
     options: {
-      /** Request timeout in ms (default: 30000) */
       timeout?: number;
-      /** Enable debug logging */
       debug?: boolean;
     } = {}
   ) {
@@ -675,3 +388,8 @@ export class Legitmark extends PartnerClient {
     });
   }
 }
+
+// Re-export for backward compatibility — tests import directly from this file
+export { LegitmarkError, ConfigurationError } from './errors';
+export { withRetry, type RetryOptions } from './retry';
+export { createClientFromEnv, validateEnvironment } from './env';

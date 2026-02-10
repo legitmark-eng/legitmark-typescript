@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-import { Taxonomy, type ResourceClient } from '../src/resources/taxonomy';
+import { Taxonomy } from '../src/resources/taxonomy';
+import type { ResourceClient } from '../src/resources/client';
 import { createMockClient } from './utils';
 import { FIXTURE_CATEGORY, FIXTURE_BRAND, FIXTURE_BRAND_AIR_JORDAN } from './fixtures';
 

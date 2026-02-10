@@ -10,7 +10,7 @@
  */
 
 import type { UploadIntentResponse } from '../types';
-import type { ResourceClient } from './taxonomy';
+import type { ResourceClient } from './client';
 import { IMAGE_CONTENT_TYPES, type ImageContentType } from '../client';
 
 /** Default file extension for image uploads */

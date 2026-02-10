@@ -1,12 +1,7 @@
-/**
- * Resource Classes
- * 
- * Sub-clients for organized API access.
- */
+export { type ResourceClient } from './client';
 
 export { 
   Taxonomy, 
-  type ResourceClient,
   type ListCategoriesResponse,
   type ListCategoriesOptions,
   type ListBrandsResponse,
