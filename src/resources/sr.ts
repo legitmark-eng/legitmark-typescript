@@ -19,8 +19,8 @@ import type {
   ProgressData,
   SubmitSRResponse,
 } from '../types';
-import type { ResourceClient } from './taxonomy';
-import { LegitmarkError } from '../client';
+import type { ResourceClient } from './client';
+import { LegitmarkError } from '../errors';
 
 /** Default polling interval for waitForRequirements (2 seconds) */
 const DEFAULT_POLL_INTERVAL_MS = 2000;

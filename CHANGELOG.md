@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-02-10
+
+### Added
+
+- Webhook event handling: typed payloads (`LegitmarkWebhookEvent` discriminated union), `parseWebhookEvent()` parser, and state helper functions (`isAuthentic`, `isCounterfeit`, `isCancelled`, `needsResubmission`, `isQcApproved`, `isAuthenticationInProgress`)
+- `WEBHOOK_EVENT_TYPES` constant for event type identifiers
+- `ResourceClient` interface now exported from package root
+- 32 new unit tests for webhook parser and helpers (131 total)
+
+### Changed
+
+- Refactored `client.ts` into focused modules: `errors.ts`, `retry.ts`, `env.ts`
+- Moved `ResourceClient` interface from `taxonomy.ts` to `resources/client.ts`
+- Organized `index.ts` exports by domain (client, errors, retry, env, resources, workflow, webhooks, types)
+- All existing exports preserved — zero breaking changes
+
 ## [0.1.1] - 2026-02-06
 
 ### Added

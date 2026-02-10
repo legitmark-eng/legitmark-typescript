@@ -1,7 +1,7 @@
 # Legitmark TypeScript SDK
 
 [![CI](https://github.com/legitmark-eng/legitmark-typescript/actions/workflows/ci.yml/badge.svg)](https://github.com/legitmark-eng/legitmark-typescript/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-99%20passing-brightgreen)](https://github.com/legitmark-eng/legitmark-typescript/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/tests-131%20passing-brightgreen)](https://github.com/legitmark-eng/legitmark-typescript/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/legitmark.svg)](https://www.npmjs.com/package/legitmark)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
 
@@ -37,6 +37,7 @@ await legitmark.sr.submit(sr.uuid);
 
 - **Full TypeScript Support** - Complete type definitions for all requests and responses
 - **Resource-Based API** - Clean access via `legitmark.sr.*`, `legitmark.taxonomy.*`, `legitmark.images.*`
+- **Webhook Event Handling** - Typed payloads, parser, and state helpers for consuming webhook events
 - **Built-in Retries** - Automatic retry with exponential backoff for transient failures
 - **Configurable Timeouts** - Per-request timeout customization
 - **Debug Logging** - Optional verbose logging for troubleshooting
@@ -247,6 +248,77 @@ const { data: brands } = await legitmark.taxonomy.getBrandsForType(typeUuid);
 await legitmark.images.uploadForSide(srUuid, sideUuid, './photo.jpg');
 await legitmark.images.uploadForSide(srUuid, sideUuid, imageBuffer);
 ```
+
+## Handling Webhook Events
+
+When Legitmark completes authentication, rejects images, or cancels a request, your webhook endpoint receives an event. The SDK provides typed payloads, a parser, and helper functions so you don't need to memorize state combinations.
+
+### Parse Incoming Events
+
+```typescript
+import { parseWebhookEvent } from 'legitmark';
+
+app.post('/webhooks/legitmark', express.json(), (req, res) => {
+  const event = parseWebhookEvent(req.body); // validates and returns typed event
+
+  switch (event.event_type) {
+    case 'state_change':
+      console.log(event.state.primary, event.state.supplement);
+      break;
+    case 'media_rejected':
+      console.log(event.sides); // which images need re-upload
+      break;
+    case 'invalidate_sr':
+      console.log(event.invalidation_reason.code);
+      break;
+  }
+
+  res.status(200).send('OK');
+});
+```
+
+### State Helpers
+
+```typescript
+import { parseWebhookEvent, isAuthentic, isCounterfeit, needsResubmission, isCancelled } from 'legitmark';
+
+const event = parseWebhookEvent(req.body);
+
+if (isAuthentic(event)) {
+  // COMPLETE + APPROVED — item is genuine
+  markItemAsAuthentic(event.reference_id);
+} else if (isCounterfeit(event)) {
+  // COMPLETE + REJECTED — item is not authentic
+  flagItem(event.reference_id);
+} else if (needsResubmission(event)) {
+  // media_rejected — partner should re-upload photos
+  requestNewPhotos(event.reference_id, event.sides);
+} else if (isCancelled(event)) {
+  // SR was cancelled
+  closeCase(event.sr_uuid);
+}
+```
+
+### Event Types
+
+| Event | Description |
+|-------|-------------|
+| `state_change` | SR state transitioned (QC, authentication progress, final result) |
+| `media_rejected` | Uploaded images rejected during quality control |
+| `invalidate_sr` | SR cancelled or cannot be processed |
+
+### Helper Functions
+
+| Helper | Returns `true` when |
+|--------|---------------------|
+| `isAuthentic(event)` | `COMPLETE + APPROVED` — item is genuine |
+| `isCounterfeit(event)` | `COMPLETE + REJECTED` — item is not authentic |
+| `isCancelled(event)` | `CANCELLED` — SR was cancelled |
+| `needsResubmission(event)` | Images were rejected, partner should re-upload |
+| `isQcApproved(event)` | QC passed, proceeding to authentication |
+| `isAuthenticationInProgress(event)` | Authenticator assigned, work underway |
+
+See the [Webhook Reference](https://docs.legitmark.com/webhook-reference/introduction) for payload schemas and setup instructions.
 
 ## Retry Utility
 

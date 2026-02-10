@@ -7,7 +7,8 @@
  * @packageDocumentation
  */
 
-import { PartnerClient, LegitmarkError } from './client';
+import { PartnerClient } from './client';
+import { LegitmarkError } from './errors';
 import {
   WorkflowState,
   CreateSRRequest,
