@@ -6,57 +6,14 @@ on:
 
 jobs:
   notify:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Post to Slack
-        uses: slackapi/slack-github-action@v2.1.0
-        with:
-          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
-          webhook-type: incoming-webhook
-          payload: |
-            {
-              "blocks": [
-                {
-                  "type": "header",
-                  "text": {
-                    "type": "plain_text",
-                    "text": "Legitmark TypeScript ${{ github.event.release.tag_name }}"
-                  }
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*Published to npm*"
-                  }
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": ${{ toJSON(github.event.release.body) }}
-                  }
-                },
-                {
-                  "type": "context",
-                  "elements": [
-                    {
-                      "type": "mrkdwn",
-                      "text": ":busts_in_silhouette: @${{ github.event.release.author.login }}"
-                    }
-                  ]
-                },
-                {
-                  "type": "context",
-                  "elements": [
-                    {
-                      "type": "mrkdwn",
-                      "text": "<${{ github.event.release.html_url }}|Release ${{ github.event.release.tag_name }}> · <https://www.npmjs.com/package/@legitmark/legitmark-typescript|npm>"
-                    }
-                  ]
-                },
-                {
-                  "type": "divider"
-                }
-              ]
-            }
+    uses: legitmark-eng/.github/.github/workflows/notify.yml@main
+    with:
+      project_name: "Legitmark TypeScript"
+      version: ${{ github.event.release.tag_name }}
+      title: "Published to npm"
+      body: ${{ github.event.release.body }}
+      release_url: ${{ github.event.release.html_url }}
+      author: ${{ github.event.release.author.login }}
+      extra_links: " · <https://www.npmjs.com/package/@legitmark/legitmark-typescript|npm>"
+    secrets:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
