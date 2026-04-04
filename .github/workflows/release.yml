@@ -1,0 +1,22 @@
+name: Release
+
+on:
+  workflow_dispatch:
+  pull_request_target:
+    types: [closed]
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  release:
+    if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main')
+    uses: legitmark-eng/.github/.github/workflows/release.yml@main
+    with:
+      project_name: "Legitmark TypeScript"
+    secrets:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      ORG_READ_TOKEN: ${{ secrets.ORG_READ_TOKEN }}
+      LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
