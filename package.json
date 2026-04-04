@@ -1,6 +1,6 @@
 {
   "name": "legitmark",
-  "version": "26.4.1",
+  "version": "26.4.2",
   "description": "Official TypeScript SDK for the Legitmark API",
   "author": "Legitmark <support@legitmark.com>",
   "license": "MIT",
