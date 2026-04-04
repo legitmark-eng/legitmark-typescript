@@ -7,10 +7,11 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 jobs:
   release:
-    name: Tag & Release
+    name: Tag, Publish & Release
     if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main')
     runs-on: ubuntu-latest
     steps:
@@ -52,6 +53,22 @@ jobs:
           git tag "${{ steps.tag.outputs.new_tag }}"
           git push origin --tags
           git push origin main 2>/dev/null || echo "::warning::Could not push version bump (branch protection). Tag created successfully."
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Publish to npm
+        run: npm publish --access public --provenance
 
       - name: Create GitHub Release
         env:
