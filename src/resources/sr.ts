@@ -47,11 +47,21 @@ export class ServiceRequests {
   /**
    * Create a new Service Request.
    * 
-   * @param request - SR creation parameters
+   * @param request - SR creation parameters (service is optional; auto-resolved if omitted)
    * @returns Created SR with UUID
    * 
    * @example
    * ```typescript
+   * // Service auto-resolved from org + item type
+   * const { sr } = await client.sr.create({
+   *   item: {
+   *     category: 'category-uuid',
+   *     type: 'type-uuid',
+   *     brand: 'brand-uuid',
+   *   },
+   * });
+   *
+   * // Or with explicit service
    * const { sr } = await client.sr.create({
    *   service: 'service-uuid',
    *   item: {

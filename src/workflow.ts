@@ -314,7 +314,7 @@ export class WorkflowRunner {
         `Cannot start from step ${fromStep} (${WORKFLOW_STEP_NAMES[fromStep]}) without a CreateSRRequest`,
         { 
           suggestions: [
-            `Provide the request: runFrom(${fromStep}, { service: '...', item: {...} })`,
+            `Provide the request: runFrom(${fromStep}, { item: { category: '...', type: '...', brand: '...' } })`,
             'Or start from step 3+ if you have an existing SR UUID',
           ] 
         }

@@ -373,6 +373,16 @@ export interface ServiceRequest {
  * 
  * @example
  * ```typescript
+ * // Minimal request (service auto-resolved from org + item type)
+ * const request: CreateSRRequest = {
+ *   item: {
+ *     category: 'footwear-uuid',
+ *     type: 'sneakers-uuid',
+ *     brand: 'nike-uuid',
+ *   },
+ * };
+ *
+ * // With explicit service and external ID
  * const request: CreateSRRequest = {
  *   service: 'your-service-uuid',
  *   item: {
@@ -387,9 +397,10 @@ export interface ServiceRequest {
 export interface CreateSRRequest {
   /** 
    * Service UUID. Identifies your partner service.
+   * Optional — if omitted, auto-resolved based on your organization and item type.
    * Obtain from the Legitmark Partner Dashboard.
    */
-  readonly service: string;
+  readonly service?: string;
 
   /** 
    * Source platform identifier (e.g., 'shopify', 'api').
