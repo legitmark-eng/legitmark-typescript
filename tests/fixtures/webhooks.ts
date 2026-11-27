@@ -61,3 +61,13 @@ export const FIXTURE_INVALIDATE_SR: LegitmarkWebhookEvent = {
   invalidation_reason: { code: 'CANCELLED', message: 'Service request cancelled' },
   timestamp: '2026-02-10T14:30:00.000Z',
 };
+
+export const FIXTURE_SERVICE_DELAY_PREDICTED: LegitmarkWebhookEvent = {
+  event_type: 'sr.service_delay_predicted',
+  sr_uuid: SR_UUID,
+  reference_id: 'partner-item-123',
+  issued_at: '2026-02-10T14:14:00.000Z',
+  issued_by: 'system',
+  turnaround_version: 2,
+  timestamp: '2026-02-10T14:14:00.120Z',
+};

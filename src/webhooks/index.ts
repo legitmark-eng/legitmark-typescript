@@ -7,6 +7,7 @@ export type {
   StateChangeEvent,
   MediaRejectedEvent,
   InvalidateSrEvent,
+  ServiceDelayPredictedEvent,
   RejectedSide,
   LegitmarkWebhookEvent,
 } from './types';

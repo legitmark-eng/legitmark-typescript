@@ -135,6 +135,7 @@ export type {
   StateChangeEvent,
   MediaRejectedEvent,
   InvalidateSrEvent,
+  ServiceDelayPredictedEvent,
   RejectedSide,
 } from './webhooks';
 
