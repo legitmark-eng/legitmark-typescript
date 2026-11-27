@@ -76,6 +76,10 @@ export function parseWebhookEvent(payload: unknown): LegitmarkWebhookEvent {
     case 'invalidate_sr':
       assertInvalidateSrFields(payload);
       break;
+
+    case 'sr.service_delay_predicted':
+      assertServiceDelayPredictedFields(payload);
+      break;
   }
 
   return payload as unknown as LegitmarkWebhookEvent;
@@ -114,6 +118,12 @@ function assertInvalidateSrFields(obj: Record<string, unknown>): void {
   }
   if (typeof obj.invalidation_reason.message !== 'string') {
     throw new Error('invalidate_sr event missing required field: invalidation_reason.message');
+  }
+}
+
+function assertServiceDelayPredictedFields(obj: Record<string, unknown>): void {
+  if (typeof obj.issued_at !== 'string') {
+    throw new Error('sr.service_delay_predicted event missing required field: issued_at');
   }
 }
 

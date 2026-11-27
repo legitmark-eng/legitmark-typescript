@@ -19,6 +19,7 @@ import {
   FIXTURE_STATE_CHANGE_CANCELLED,
   FIXTURE_MEDIA_REJECTED,
   FIXTURE_INVALIDATE_SR,
+  FIXTURE_SERVICE_DELAY_PREDICTED,
 } from './fixtures';
 
 describe('parseWebhookEvent', () => {
@@ -42,6 +43,16 @@ describe('parseWebhookEvent', () => {
     expect(event.event_type).toBe('invalidate_sr');
     if (event.event_type === 'invalidate_sr') {
       expect(event.invalidation_reason.code).toBe('CANCELLED');
+    }
+  });
+
+  it('parses a valid sr.service_delay_predicted event', () => {
+    const event = parseWebhookEvent(FIXTURE_SERVICE_DELAY_PREDICTED);
+    expect(event.event_type).toBe('sr.service_delay_predicted');
+    if (event.event_type === 'sr.service_delay_predicted') {
+      expect(event.issued_at).toBe('2026-02-10T14:14:00.000Z');
+      expect(event.issued_by).toBe('system');
+      expect(event.turnaround_version).toBe(2);
     }
   });
 
@@ -111,14 +122,21 @@ describe('parseWebhookEvent', () => {
         invalidation_reason: { code: 'X' },
       })).toThrow('invalidation_reason.message');
     });
+
+    it('throws on sr.service_delay_predicted without issued_at', () => {
+      expect(() => parseWebhookEvent({
+        event_type: 'sr.service_delay_predicted', sr_uuid: 'x', timestamp: 'x',
+      })).toThrow('issued_at');
+    });
   });
 });
 
 describe('WEBHOOK_EVENT_TYPES', () => {
-  it('contains all three event types', () => {
+  it('contains every event type', () => {
     expect(WEBHOOK_EVENT_TYPES.STATE_CHANGE).toBe('state_change');
     expect(WEBHOOK_EVENT_TYPES.MEDIA_REJECTED).toBe('media_rejected');
     expect(WEBHOOK_EVENT_TYPES.INVALIDATE_SR).toBe('invalidate_sr');
+    expect(WEBHOOK_EVENT_TYPES.SERVICE_DELAY_PREDICTED).toBe('sr.service_delay_predicted');
   });
 });
 

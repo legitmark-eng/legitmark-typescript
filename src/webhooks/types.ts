@@ -34,6 +34,7 @@ export const WEBHOOK_EVENT_TYPES = {
   STATE_CHANGE: 'state_change',
   MEDIA_REJECTED: 'media_rejected',
   INVALIDATE_SR: 'invalidate_sr',
+  SERVICE_DELAY_PREDICTED: 'sr.service_delay_predicted',
 } as const;
 
 export type WebhookEventType = typeof WEBHOOK_EVENT_TYPES[keyof typeof WEBHOOK_EVENT_TYPES];
@@ -105,6 +106,23 @@ export interface InvalidateSrEvent extends WebhookEventBase {
 }
 
 /**
+ * Emitted once when the result window is close to its deadline and no result
+ * has been issued. Not sent while the window is paused for a photo request.
+ * Informational only: it does not change the result.
+ *
+ * Delivered only to endpoints subscribed to this event.
+ *
+ * @see {@link https://docs.legitmark.com/webhook-reference/events}
+ */
+export interface ServiceDelayPredictedEvent extends WebhookEventBase {
+  readonly event_type: 'sr.service_delay_predicted';
+  /** ISO 8601 timestamp of when the notice was issued */
+  readonly issued_at: string;
+  readonly issued_by: 'system';
+  readonly turnaround_version: number;
+}
+
+/**
  * Union of all Legitmark webhook event types.
  * 
  * Discriminated on `event_type` — use a `switch` or `if` check to narrow
@@ -125,4 +143,5 @@ export interface InvalidateSrEvent extends WebhookEventBase {
 export type LegitmarkWebhookEvent =
   | StateChangeEvent
   | MediaRejectedEvent
-  | InvalidateSrEvent;
+  | InvalidateSrEvent
+  | ServiceDelayPredictedEvent;
